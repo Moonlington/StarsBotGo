@@ -16,7 +16,6 @@ import (
 
 // Bot parameters
 var (
-	GuildID        = flag.String("guild", "", "Test guild ID. If not passed - bot registers commands globally")
 	RemoveCommands = flag.Bool("rmcmd", true, "Remove all commands after shutdowning or not")
 )
 
@@ -84,7 +83,13 @@ func newCheck() *Check {
 var checkMap map[string]*Check = map[string]*Check{}
 
 func main() {
-	checkCmd, _ := h.AddSlashCommandInGuild("check", "Checks a user's vibe and swag.", *GuildID, func(h *harmonia.Harmonia, i *harmonia.Invocation) {
+	h.AddSlashCommandInGuild("updatestars", "Update Stars from the GitHub repo.", "604286100181221395", func(h *harmonia.Harmonia, i *harmonia.Invocation) {
+		if !Contains(config.OwnerIDs, i.Author.ID) {
+			h.EphemeralRespond(i, "You are not allowed to use this command.")
+		}
+	})
+
+	checkCmd, _ := h.AddSlashCommand("check", "Checks a user's vibe and swag.", func(h *harmonia.Harmonia, i *harmonia.Invocation) {
 		var check *Check
 		var user *harmonia.Author
 		if i.GetOption("user") != nil {
