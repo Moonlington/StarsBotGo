@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/Moonlington/harmonia"
 	"github.com/bwmarrin/discordgo"
@@ -22,8 +23,6 @@ func AddColorHandlers(h *harmonia.Harmonia) error {
 			h.EphemeralRespond(i, "The color chosen must be in the form of a hex code. (e.g. #ffd700)")
 			return
 		}
-
-		// Check if name is not empty
 
 		// Convert to int
 		hexCode := validHexCode.FindStringSubmatch(inputHex)[1]
@@ -45,7 +44,7 @@ func AddColorHandlers(h *harmonia.Harmonia) error {
 			}
 		}
 
-		roleName := fmt.Sprintf("%s (#%s)", i.GetOption("name").StringValue(), hexCode)
+		roleName := fmt.Sprintf("%s (#%s)", i.GetOption("name").StringValue(), strings.ToUpper(hexCode))
 
 		if hasStarsColorRole && starsRole != nil {
 			_, err := h.GuildRoleEdit(i.GuildID, starsRole.ID, &discordgo.RoleParams{Name: roleName, Color: &color})
