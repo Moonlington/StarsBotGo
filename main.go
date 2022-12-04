@@ -150,7 +150,12 @@ func main() {
 
 	err := AddStarboardHandlers(h)
 	if err != nil {
-		log.Fatalf("Cannot open the session: %v", err)
+		log.Fatalf("Cannot add Starboard handlers: %v", err)
+	}
+
+	err = AddColorHandlers(h)
+	if err != nil {
+		log.Fatalf("Cannot add Color handlers: %v", err)
 	}
 
 	err = h.Run()
