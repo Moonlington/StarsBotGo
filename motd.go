@@ -52,6 +52,14 @@ func AddMOTDHandlers(h *harmonia.Harmonia) error {
 	}
 
 	h.AddHandler(func(s *discordgo.Session, r *discordgo.MessageCreate) {
+		if r.Author.Bot {
+			return
+		}
+
+		if r.GuildID == "" {
+			return
+		}
+
 		GuildMOTD, ok := MOTDDatabase[r.GuildID]
 		if !ok {
 			GuildMOTD = GuildMOTDData{}
