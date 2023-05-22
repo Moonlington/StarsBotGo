@@ -153,6 +153,11 @@ func main() {
 		log.Fatalf("Cannot add Starboard handlers: %v", err)
 	}
 
+	err = AddMOTDHandlers(h)
+	if err != nil {
+		log.Fatalf("Cannot add MOTD handlers: %v", err)
+	}
+
 	err = AddColorHandlers(h)
 	if err != nil {
 		log.Fatalf("Cannot add Color handlers: %v", err)
