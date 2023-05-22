@@ -17,7 +17,7 @@ type GuildStarboardData map[string]string
 
 var StarboardDatabase StarboardData
 
-func ReadFromJsonFile() error {
+func ReadFromStarboardJsonFile() error {
 	data, err := os.ReadFile("starboard_data.json")
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func ReadFromJsonFile() error {
 	return nil
 }
 
-func SaveToJsonFile() error {
+func SaveToStarboardJsonFile() error {
 	file, err := os.Create("starboard_data.json")
 	defer file.Close()
 	if err != nil {
@@ -49,7 +49,7 @@ func SaveToJsonFile() error {
 }
 
 func AddStarboardHandlers(h *harmonia.Harmonia) error {
-	if err := ReadFromJsonFile(); err != nil {
+	if err := ReadFromStarboardJsonFile(); err != nil {
 		return err
 	}
 
@@ -102,7 +102,7 @@ func handleReactionEvent(h *harmonia.Harmonia, r *discordgo.MessageReaction) {
 		if ok {
 			h.ChannelMessageDelete(config.StarChannel, existingStarboardMessageID)
 			delete(GuildStarboard, r.MessageID)
-			SaveToJsonFile()
+			SaveToStarboardJsonFile()
 		}
 		return
 	}
@@ -217,5 +217,5 @@ func handleReactionEvent(h *harmonia.Harmonia, r *discordgo.MessageReaction) {
 			return
 		}
 	}
-	SaveToJsonFile()
+	SaveToStarboardJsonFile()
 }
