@@ -2,3 +2,5 @@ config.yml
 starboard_data.json
 run.bat
 ./ExecStarsBot
+.vscode
+MOTD_data.json
