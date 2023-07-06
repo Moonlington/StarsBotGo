@@ -99,13 +99,19 @@ func AddMOTDHandlers(h *harmonia.Harmonia) error {
 			}
 			delete(GuildMOTD, trigger)
 			h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been cleared.", trigger))
-			SaveToMOTDJsonFile()
+			err := SaveToMOTDJsonFile()
+			if err != nil {
+				h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
+			}
 			return
 		}
 
 		GuildMOTD[trigger] = response
 		h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been set to `%s`.", trigger, response))
-		SaveToMOTDJsonFile()
+		err := SaveToMOTDJsonFile()
+		if err != nil {
+			h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
+		}
 	})
 	if err != nil {
 		return err
