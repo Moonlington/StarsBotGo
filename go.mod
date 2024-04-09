@@ -3,7 +3,7 @@ module StarsBotGo
 go 1.19
 
 require (
-	github.com/Moonlington/harmonia v0.7.2
+	github.com/Moonlington/harmonia v0.7.4
 	github.com/bwmarrin/discordgo v0.28.1
 	gopkg.in/yaml.v3 v3.0.1
 )
