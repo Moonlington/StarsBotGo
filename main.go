@@ -88,6 +88,7 @@ func newCheck() *Check {
 var checkMap map[string]*Check = map[string]*Check{}
 
 func main() {
+	slog.Debug("adding updatestars command")
 	h.AddCommand(harmonia.NewSlashCommand("updatestars").
 		WithDescription("Update Stars from the GitHub repo.").
 		WithGuildID("604286100181221395").
@@ -100,9 +101,7 @@ func main() {
 			h.Respond(i, "Not supported yet :)")
 		}))
 
-	checkOpt := harmonia.NewOption("user", discordgo.ApplicationCommandOptionUser).
-		WithDescription("The user to check")
-
+	slog.Debug("adding check command")
 	h.AddCommand(harmonia.NewSlashCommand("check").
 		WithDescription("Checks a user's vibe and swag.").
 		WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
@@ -142,8 +141,12 @@ func main() {
 
 			h.Respond(i, fmt.Sprintf("%s's vibe: %d%%\n%s's swag: %d%%\nTime until next check: %s", userName, check.Vibe, userName, check.Swag, time.Since(check.timestamp.Add(time.Hour)).Abs().Truncate(time.Second).String()))
 		}).
-		WithOptions(checkOpt))
+		WithOptions(
+			harmonia.NewOption("user", discordgo.ApplicationCommandOptionUser).
+				WithDescription("The user to check"),
+		))
 
+	slog.Debug("adding check user command")
 	h.AddCommand(harmonia.NewUserCommand("Check vibe and swag").
 		WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
 			var check *Check
@@ -173,6 +176,7 @@ func main() {
 			h.Respond(i, fmt.Sprintf("%s's vibe: %d%%\n%s's swag: %d%%\nTime until next check: %s", userName, check.Vibe, userName, check.Swag, time.Since(check.timestamp.Add(time.Hour)).Abs().Truncate(time.Second).String()))
 		}))
 
+	slog.Debug("adding repeater handler")
 	var repeaterMap map[string]*Repeater = map[string]*Repeater{}
 	h.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		repeater, ok := repeaterMap[m.ChannelID]
@@ -192,21 +196,25 @@ func main() {
 		}
 	})
 
+	slog.Debug("adding starboard handlers")
 	err := AddStarboardHandlers(h)
 	if err != nil {
 		slog.Error("Cannot add Starboard handlers", err)
 	}
 
+	slog.Debug("adding motd handlers")
 	err = AddMOTDHandlers(h)
 	if err != nil {
 		slog.Error("Cannot add MOTD handlers", err)
 	}
 
+	slog.Debug("adding color handlers")
 	err = AddColorHandlers(h)
 	if err != nil {
 		slog.Error("Cannot add Color handlers", err)
 	}
 
+	slog.Debug("running the session")
 	err = h.Run()
 	if err != nil {
 		slog.Error("Cannot open the session", err)

@@ -4,3 +4,4 @@ run.bat
 ./ExecStarsBot
 .vscode
 MOTD_data.json
+*.log
