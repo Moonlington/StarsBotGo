@@ -28,10 +28,10 @@ func ReadFromMOTDJsonFile() error {
 
 func SaveToMOTDJsonFile() error {
 	file, err := os.Create("MOTD_data.json")
-	defer file.Close()
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	data, err := json.Marshal(&MOTDDatabase)
 	if err != nil {
@@ -73,51 +73,111 @@ func AddMOTDHandlers(h *harmonia.Harmonia) error {
 			}
 		}
 	})
-	motdCmd, err := h.AddSlashCommand("motd", "Set MOTD data", func(h *harmonia.Harmonia, i *harmonia.Invocation) {
-		if !Contains(config.OwnerIDs, i.Author.ID) {
-			h.EphemeralRespond(i, "You are not allowed to use this command.")
-		}
 
-		trigger := strings.ToLower(i.GetOption("trigger").StringValue())
-		response := ""
-		_, ok := i.GetOptionMap()["response"]
-		if ok {
-			response = i.GetOption("response").StringValue()
-		}
+	err := h.AddCommand(harmonia.NewGroupSlashCommand("motd").
+		WithDescription("MOTD commands").
+		WithDefaultPermissions(discordgo.PermissionManageMessages).
+		WithDMPermission(false).
+		WithSubCommands(
+			harmonia.NewSlashCommand("set").
+				WithDescription("Sets the response for a trigger").
+				WithOptions(
+					harmonia.NewOption("trigger", discordgo.ApplicationCommandOptionString).
+						WithDescription("The trigger").
+						IsRequired(),
+					harmonia.NewOption("response", discordgo.ApplicationCommandOptionString).
+						IsRequired().
+						WithDescription("The fish"),
+				).
+				WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
+					trigger := strings.ToLower(i.GetOption("trigger").StringValue())
+					response := i.GetOption("response").StringValue()
 
-		GuildMOTD, ok := MOTDDatabase[i.GuildID]
-		if !ok {
-			GuildMOTD = GuildMOTDData{}
-			MOTDDatabase[i.GuildID] = GuildMOTD
-		}
+					GuildMOTD, ok := MOTDDatabase[i.GuildID]
+					if !ok {
+						GuildMOTD = GuildMOTDData{}
+						MOTDDatabase[i.GuildID] = GuildMOTD
+					}
 
-		_, ok = GuildMOTD[trigger]
-		if response == "" {
-			if !ok {
-				h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` does not exist for this server and thus did not need to be cleared.", trigger))
-				return
-			}
-			delete(GuildMOTD, trigger)
-			h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been cleared.", trigger))
-			err := SaveToMOTDJsonFile()
-			if err != nil {
-				h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
-			}
-			return
-		}
+					GuildMOTD[trigger] = response
+					h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been set to `%s`.", trigger, response))
+					err := SaveToMOTDJsonFile()
+					if err != nil {
+						h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
+					}
+				}),
+			harmonia.NewSlashCommand("remove").
+				WithDescription("Removes the response for a trigger").
+				WithOptions(
+					harmonia.NewOption("trigger", discordgo.ApplicationCommandOptionString).
+						WithDescription("The trigger").
+						IsRequired(),
+				).
+				WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
+					trigger := strings.ToLower(i.GetOption("trigger").StringValue())
 
-		GuildMOTD[trigger] = response
-		h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been set to `%s`.", trigger, response))
-		err := SaveToMOTDJsonFile()
-		if err != nil {
-			h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
-		}
-	})
+					GuildMOTD, ok := MOTDDatabase[i.GuildID]
+					if !ok {
+						GuildMOTD = GuildMOTDData{}
+						MOTDDatabase[i.GuildID] = GuildMOTD
+					}
+
+					if _, ok = GuildMOTD[trigger]; !ok {
+						h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` does not exist for this server and thus did not need to be cleared.", trigger))
+						return
+					}
+					delete(GuildMOTD, trigger)
+					h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been cleared.", trigger))
+					err := SaveToMOTDJsonFile()
+					if err != nil {
+						h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
+					}
+				}),
+		))
+	// err = h.AddCommand(harmonia.NewSlashCommand("motd").
+	// 	WithDescription("Set MOTD data").
+	// 	WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
+	// 		trigger := strings.ToLower(i.GetOption("trigger").StringValue())
+	// 		response := i.GetOption("response").StringValue()
+
+	// 		GuildMOTD, ok := MOTDDatabase[i.GuildID]
+	// 		if !ok {
+	// 			GuildMOTD = GuildMOTDData{}
+	// 			MOTDDatabase[i.GuildID] = GuildMOTD
+	// 		}
+
+	// 		_, ok = GuildMOTD[trigger]
+	// 		if response == "" {
+	// 			if !ok {
+	// 				h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` does not exist for this server and thus did not need to be cleared.", trigger))
+	// 				return
+	// 			}
+	// 			delete(GuildMOTD, trigger)
+	// 			h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been cleared.", trigger))
+	// 			err := SaveToMOTDJsonFile()
+	// 			if err != nil {
+	// 				h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
+	// 			}
+	// 			return
+	// 		}
+
+	// 		GuildMOTD[trigger] = response
+	// 		h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been set to `%s`.", trigger, response))
+	// 		err := SaveToMOTDJsonFile()
+	// 		if err != nil {
+	// 			h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
+	// 		}
+	// 	}).
+	// 	WithOptions(
+	// 		harmonia.NewOption("trigger", discordgo.ApplicationCommandOptionString).
+	// 			WithDescription("The trigger").
+	// 			IsRequired(),
+	// 		harmonia.NewOption("response", discordgo.ApplicationCommandOptionString).
+	// 			WithDescription("The fish"),
+	// 	))
+
 	if err != nil {
 		return err
 	}
-
-	motdCmd.AddOption("trigger", "The trigger", true, discordgo.ApplicationCommandOptionString)
-	motdCmd.AddOption("response", "The fish", false, discordgo.ApplicationCommandOptionString)
 	return nil
 }

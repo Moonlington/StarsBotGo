@@ -30,10 +30,10 @@ func ReadFromStarboardJsonFile() error {
 
 func SaveToStarboardJsonFile() error {
 	file, err := os.Create("starboard_data.json")
-	defer file.Close()
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	data, err := json.Marshal(&StarboardDatabase)
 	if err != nil {
@@ -114,7 +114,7 @@ func handleReactionEvent(h *harmonia.Harmonia, r *discordgo.MessageReaction) {
 		fmt.Printf("Unable to get member: %v", err)
 		return
 	}
-	roles, err := h.RolesFromMember(member)
+	roles, err := harmonia.RolesFromMember(h, member)
 	if err != nil {
 		fmt.Printf("Unable to get roles: %v", err)
 		return
@@ -209,7 +209,7 @@ func handleReactionEvent(h *harmonia.Harmonia, r *discordgo.MessageReaction) {
 		_, err := h.ChannelMessageEditComplex(&discordgo.MessageEdit{
 			ID:      existingStarboardMessageID,
 			Content: &content,
-			Embeds:  []*discordgo.MessageEmbed{starboardEmbed},
+			Embeds:  &[]*discordgo.MessageEmbed{starboardEmbed},
 			Channel: config.StarChannel,
 		})
 		if err != nil {

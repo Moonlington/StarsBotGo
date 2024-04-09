@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -54,10 +54,15 @@ func init() {
 	var err error
 
 	err = parseConfig()
+	if err != nil {
+		slog.Error("Error parsing config", err)
+		os.Exit(-1)
+	}
 
 	h, err = harmonia.New(config.Token)
 	if err != nil {
-		log.Fatalf("Invalid bot parameters: %v", err)
+		slog.Error("Invalid bot parameters", err)
+		os.Exit(-1)
 	}
 }
 
@@ -83,51 +88,90 @@ func newCheck() *Check {
 var checkMap map[string]*Check = map[string]*Check{}
 
 func main() {
-	h.AddSlashCommandInGuild("updatestars", "Update Stars from the GitHub repo.", "604286100181221395", func(h *harmonia.Harmonia, i *harmonia.Invocation) {
-		if !Contains(config.OwnerIDs, i.Author.ID) {
-			h.EphemeralRespond(i, "You are not allowed to use this command.")
-		}
-	})
+	h.AddCommand(harmonia.NewSlashCommand("updatestars").
+		WithDescription("Update Stars from the GitHub repo.").
+		WithGuildID("604286100181221395").
+		WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
+			if !Contains(config.OwnerIDs, i.Author.ID) {
+				h.EphemeralRespond(i, "You are not allowed to use this command.")
+				return
+			}
 
-	checkCmd, _ := h.AddSlashCommand("check", "Checks a user's vibe and swag.", func(h *harmonia.Harmonia, i *harmonia.Invocation) {
-		var check *Check
-		var user *harmonia.Author
-		if i.GetOption("user") != nil {
-			member, err := h.GuildMember(i.GuildID, i.GetOption("user").UserValue(h.Session).ID)
+			h.Respond(i, "Not supported yet :)")
+		}))
+
+	checkOpt := harmonia.NewOption("user", discordgo.ApplicationCommandOptionUser).
+		WithDescription("The user to check")
+
+	h.AddCommand(harmonia.NewSlashCommand("check").
+		WithDescription("Checks a user's vibe and swag.").
+		WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
+			var check *Check
+			var user *harmonia.Author
+			if i.GetOption("user") != nil {
+				member, err := h.State.Member(i.GuildID, i.GetOption("user").UserValue(h.Session).ID)
+				if err != nil {
+					h.EphemeralRespond(i, fmt.Sprintf("There was an error getting the user: %s", err))
+					return
+				}
+
+				user, err = harmonia.AuthorFromMember(h, member)
+				if err != nil {
+					h.EphemeralRespond(i, fmt.Sprintf("There was an error getting the user: %s", err))
+					return
+				}
+			} else {
+				user = i.Author
+			}
+
+			check, ok := checkMap[user.ID]
+			if !ok {
+				check = newCheck()
+				checkMap[user.ID] = check
+			}
+
+			if time.Since(check.timestamp) > time.Hour {
+				check = newCheck()
+				checkMap[user.ID] = check
+			}
+
+			userName := user.Nick
+			if userName == "" {
+				userName = user.Username
+			}
+
+			h.Respond(i, fmt.Sprintf("%s's vibe: %d%%\n%s's swag: %d%%\nTime until next check: %s", userName, check.Vibe, userName, check.Swag, time.Since(check.timestamp.Add(time.Hour)).Abs().Truncate(time.Second).String()))
+		}).
+		WithOptions(checkOpt))
+
+	h.AddCommand(harmonia.NewUserCommand("Check vibe and swag").
+		WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
+			var check *Check
+
+			user, err := i.TargetAuthor(h)
 			if err != nil {
 				h.EphemeralRespond(i, fmt.Sprintf("There was an error getting the user: %s", err))
 				return
 			}
 
-			user, err = h.AuthorFromMember(member)
-			if err != nil {
-				h.EphemeralRespond(i, fmt.Sprintf("There was an error getting the user: %s", err))
-				return
+			check, ok := checkMap[user.ID]
+			if !ok {
+				check = newCheck()
+				checkMap[user.ID] = check
 			}
-		} else {
-			user = i.Author
-		}
 
-		check, ok := checkMap[user.ID]
-		if !ok {
-			check = newCheck()
-			checkMap[user.ID] = check
-		}
+			if time.Since(check.timestamp) > time.Hour {
+				check = newCheck()
+				checkMap[user.ID] = check
+			}
 
-		if time.Now().Sub(check.timestamp) > time.Hour {
-			check = newCheck()
-			checkMap[user.ID] = check
-		}
+			userName := user.Nick
+			if userName == "" {
+				userName = user.Username
+			}
 
-		userName := user.Nick
-		if userName == "" {
-			userName = user.Username
-		}
-
-		h.Respond(i, fmt.Sprintf("%s's vibe: %d%%\n%s's swag: %d%%\nTime until next check: %s", userName, check.Vibe, userName, check.Swag, time.Now().Sub(check.timestamp.Add(time.Hour)).Abs().Truncate(time.Second).String()))
-	})
-
-	checkCmd.AddOption("user", "The user to check", false, discordgo.ApplicationCommandOptionUser)
+			h.Respond(i, fmt.Sprintf("%s's vibe: %d%%\n%s's swag: %d%%\nTime until next check: %s", userName, check.Vibe, userName, check.Swag, time.Since(check.timestamp.Add(time.Hour)).Abs().Truncate(time.Second).String()))
+		}))
 
 	var repeaterMap map[string]*Repeater = map[string]*Repeater{}
 	h.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -150,37 +194,40 @@ func main() {
 
 	err := AddStarboardHandlers(h)
 	if err != nil {
-		log.Fatalf("Cannot add Starboard handlers: %v", err)
+		slog.Error("Cannot add Starboard handlers", err)
 	}
 
 	err = AddMOTDHandlers(h)
 	if err != nil {
-		log.Fatalf("Cannot add MOTD handlers: %v", err)
+		slog.Error("Cannot add MOTD handlers", err)
 	}
 
 	err = AddColorHandlers(h)
 	if err != nil {
-		log.Fatalf("Cannot add Color handlers: %v", err)
+		slog.Error("Cannot add Color handlers", err)
 	}
 
 	err = h.Run()
 	if err != nil {
-		log.Fatalf("Cannot open the session: %v", err)
+		slog.Error("Cannot open the session", err)
+		os.Exit(-1)
 	}
 
 	defer h.Close()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	log.Println("Press Ctrl+C to exit")
+	slog.Info("Press Ctrl+C to exit")
 	<-stop
 
 	if *RemoveCommands {
+		slog.Info("Removing all commands")
 		err := h.RemoveAllCommands()
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("Error removing all commands", err)
+			os.Exit(-1)
 		}
 	}
 
-	log.Println("Gracefully shutting down.")
+	slog.Info("Gracefully shutting down.")
 }
