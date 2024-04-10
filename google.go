@@ -35,6 +35,7 @@ func AddGoogleHandlers(h *harmonia.Harmonia) error {
 			}
 			if len(resp.Items) == 0 {
 				h.Respond(i, fmt.Sprintf("Found nothing for query `%s`", query))
+				return
 			}
 			result := resp.Items[0]
 			h.Respond(i, fmt.Sprintf("`%s`\n%s", query, result.Link))
