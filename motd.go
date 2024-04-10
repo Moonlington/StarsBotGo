@@ -134,47 +134,6 @@ func AddMOTDHandlers(h *harmonia.Harmonia) error {
 					}
 				}),
 		))
-	// err = h.AddCommand(harmonia.NewSlashCommand("motd").
-	// 	WithDescription("Set MOTD data").
-	// 	WithCommand(func(h *harmonia.Harmonia, i *harmonia.Invocation) {
-	// 		trigger := strings.ToLower(i.GetOption("trigger").StringValue())
-	// 		response := i.GetOption("response").StringValue()
-
-	// 		GuildMOTD, ok := MOTDDatabase[i.GuildID]
-	// 		if !ok {
-	// 			GuildMOTD = GuildMOTDData{}
-	// 			MOTDDatabase[i.GuildID] = GuildMOTD
-	// 		}
-
-	// 		_, ok = GuildMOTD[trigger]
-	// 		if response == "" {
-	// 			if !ok {
-	// 				h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` does not exist for this server and thus did not need to be cleared.", trigger))
-	// 				return
-	// 			}
-	// 			delete(GuildMOTD, trigger)
-	// 			h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been cleared.", trigger))
-	// 			err := SaveToMOTDJsonFile()
-	// 			if err != nil {
-	// 				h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
-	// 			}
-	// 			return
-	// 		}
-
-	// 		GuildMOTD[trigger] = response
-	// 		h.EphemeralRespond(i, fmt.Sprintf("Trigger `%s` has been set to `%s`.", trigger, response))
-	// 		err := SaveToMOTDJsonFile()
-	// 		if err != nil {
-	// 			h.EphemeralRespond(i, fmt.Sprintf("Something went wrong with saving the JSON file:\n```%v```", err))
-	// 		}
-	// 	}).
-	// 	WithOptions(
-	// 		harmonia.NewOption("trigger", discordgo.ApplicationCommandOptionString).
-	// 			WithDescription("The trigger").
-	// 			IsRequired(),
-	// 		harmonia.NewOption("response", discordgo.ApplicationCommandOptionString).
-	// 			WithDescription("The fish"),
-	// 	))
 
 	if err != nil {
 		return err

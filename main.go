@@ -32,10 +32,12 @@ var h *harmonia.Harmonia
 var config *Config
 
 type Config struct {
-	Token       string   `yaml:"token"`
-	StarChannel string   `yaml:"starChannel"`
-	OwnerIDs    []string `yaml:"ownerIDs"`
-	ModRoleIDs  []string `yaml:"modRoleIDs"`
+	Token                string   `yaml:"token"`
+	GoogleAPIToken       string   `yaml:"googleAPIToken"`
+	GoogleSearchEngineID string   `yaml:"googleSearchEngineID"`
+	StarChannel          string   `yaml:"starChannel"`
+	OwnerIDs             []string `yaml:"ownerIDs"`
+	ModRoleIDs           []string `yaml:"modRoleIDs"`
 }
 
 func parseConfig() error {
@@ -212,6 +214,12 @@ func main() {
 	err = AddColorHandlers(h)
 	if err != nil {
 		slog.Error("Cannot add Color handlers", err)
+	}
+
+	slog.Debug("adding google handlers")
+	err = AddGoogleHandlers(h)
+	if err != nil {
+		slog.Error("Cannot add Google handlers", err)
 	}
 
 	slog.Debug("running the session")
