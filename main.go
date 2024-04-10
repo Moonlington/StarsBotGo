@@ -108,7 +108,7 @@ func main() {
 			var check *Check
 			var user *harmonia.Author
 			if i.GetOption("user") != nil {
-				member, err := h.State.Member(i.GuildID, i.GetOption("user").UserValue(h.Session).ID)
+				member, err := h.GuildMember(i.GuildID, i.GetOption("user").UserValue(h.Session).ID)
 				if err != nil {
 					h.EphemeralRespond(i, fmt.Sprintf("There was an error getting the user: %s", err))
 					return
