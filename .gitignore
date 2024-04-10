@@ -5,3 +5,5 @@ run.bat
 .vscode
 MOTD_data.json
 *.log
+*.out
+StarsBotGo
