@@ -98,7 +98,7 @@ func handleReactionEvent(h *harmonia.Harmonia, r *discordgo.MessageReaction) {
 
 	existingStarboardMessageID, ok := GuildStarboard[r.MessageID]
 
-	if starCount < 4 {
+	if starCount < 3 {
 		if ok {
 			h.ChannelMessageDelete(config.StarChannel, existingStarboardMessageID)
 			delete(GuildStarboard, r.MessageID)
